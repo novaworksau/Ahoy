@@ -1,0 +1,25 @@
+image: Visual Studio 2015
+version: "1.0.0-rc3-{build}"
+configuration:
+  - Release
+
+init:
+  - git config --global core.autocrlf input
+  - ps: $Env:LABEL = "rc3-" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
+
+test: on
+
+before_build:
+  - dotnet restore -v minimal
+
+build:
+  project: ahoy.sln
+  parallel: true
+  verbosity: minimal
+
+after_build:
+  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.Swagger\project.json
+  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.SwaggerUi\project.json
+
+artifacts:
+  - path: artifacts\*.nupkg

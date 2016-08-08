@@ -47,7 +47,7 @@ namespace Swashbuckle.SwaggerGen.Generator
         {
             var actionDescriptor = apiDescription.ActionDescriptor as ControllerActionDescriptor;
             return (actionDescriptor != null)
-                ? actionDescriptor.ControllerTypeInfo.GetCustomAttributes(false)
+                ? actionDescriptor.ControllerTypeInfo.GetCustomAttributes(true)
                 : Enumerable.Empty<object>();
         }
 
@@ -55,12 +55,12 @@ namespace Swashbuckle.SwaggerGen.Generator
         {
             var actionDescriptor = apiDescription.ActionDescriptor as ControllerActionDescriptor;
             return (actionDescriptor != null)
-                ? actionDescriptor.MethodInfo.GetCustomAttributes(false)
+                ? actionDescriptor.MethodInfo.GetCustomAttributes(true)
                 : Enumerable.Empty<object>();
         }
 
 
-
+        
         internal static string RelativePathSansQueryString(this ApiDescription apiDescription)
         {
             return apiDescription.RelativePath.Split('?').First();
