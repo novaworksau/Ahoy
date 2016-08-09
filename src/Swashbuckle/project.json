@@ -21,9 +21,9 @@
   },
 
   "dependencies": {
-    "Swashbuckle.Swagger": "6.0.0-beta901",
-    "Swashbuckle.SwaggerGen": "6.0.0-beta901",
-    "Swashbuckle.SwaggerUi": "6.0.0-beta901"
+    "Swashbuckle.Swagger": "6.0.0-rc3-*",
+    "Swashbuckle.SwaggerGen": "6.0.0-rc3-*",
+    "Swashbuckle.SwaggerUi": "6.0.0-rc3-*"
   },
 
   "frameworks": {
