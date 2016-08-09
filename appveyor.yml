@@ -7,7 +7,7 @@ init:
   - git config --global core.autocrlf input
   - ps: $Env:LABEL = "rc3-" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
 
-test: on
+test: off
 
 before_build:
   - dotnet restore -v minimal
