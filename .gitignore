@@ -1,7 +1,7 @@
 [Oo]bj/
 [Bb]in/
 .vs/
-bower_components/
+#bower_components/
 project.lock.json
 *.user
 artifacts/
