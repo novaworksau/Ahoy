@@ -9,8 +9,14 @@ Handlebars.registerHelper('sanitize', function(html) {
 
 Handlebars.registerHelper('renderTextParam', function(param) {
     var result, type = 'text', idAtt = '', paramType = '';
-    if (typeof param != 'undefined') {
-        paramType = param.type || param.schema.type;
+    if (typeof param != 'undefined' && param != null) {
+        if (param.type != null) {
+            paramType = param.type;
+        } else if (param.schema != null && param.schema.type != null) {
+            paramType = param.schema.type;
+        }
+    } else {
+        return new Handlebars.SafeString('<input />');
     }
     var isArray = paramType.toLowerCase() === 'array' || param.allowMultiple;
     var defaultValue = isArray && Array.isArray(param.default) ? param.default.join('\n') : param.default;
