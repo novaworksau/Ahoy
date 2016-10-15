@@ -1,6 +1,9 @@
 [Oo]bj/
 [Bb]in/
 .vs/
+.vscode/
+.idea*
+bower_components/
 src/SwashBuckle.SwaggerUi/bower_components/swagger-ui/node_modules/
 project.lock.json
 *.user
