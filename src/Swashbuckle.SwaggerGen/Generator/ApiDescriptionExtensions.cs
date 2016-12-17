@@ -2,14 +2,36 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using System.Reflection;
 
 namespace Swashbuckle.SwaggerGen.Generator
 {
     public static class ApiDescriptionExtensions
     {
+        public static IEnumerable<object> ControllerAttributes(this ApiDescription apiDescription)
+        {
+            var controllerActionDescriptor = apiDescription.ControllerActionDescriptor();
+            return (controllerActionDescriptor == null)
+                ? Enumerable.Empty<object>()
+                : controllerActionDescriptor.ControllerTypeInfo.GetCustomAttributes(false);
+        }
+
+        public static IEnumerable<object> ActionAttributes(this ApiDescription apiDescription)
+        {
+            var controllerActionDescriptor = apiDescription.ControllerActionDescriptor();
+            return (controllerActionDescriptor == null)
+                ? Enumerable.Empty<object>()
+                : controllerActionDescriptor.MethodInfo.GetCustomAttributes(false);
+        }
+
+        internal static string ControllerName(this ApiDescription apiDescription)
+        {
+            var controllerActionDescriptor = apiDescription.ControllerActionDescriptor();
+            return (controllerActionDescriptor == null) ? null : controllerActionDescriptor.ControllerName;
+        }
+
         internal static string FriendlyId(this ApiDescription apiDescription)
         {
             var parts = (apiDescription.RelativePathSansQueryString() + "/" + apiDescription.HttpMethod.ToLower())
@@ -19,7 +41,6 @@ namespace Swashbuckle.SwaggerGen.Generator
             foreach (var part in parts) 
             {
                 var trimmed = part.Trim('{', '}');
-
                 builder.AppendFormat("{0}{1}",
                     (part.StartsWith("{") ? "By" : string.Empty),
                     trimmed.ToTitleCase()
@@ -27,6 +48,11 @@ namespace Swashbuckle.SwaggerGen.Generator
             }
 
             return builder.ToString();
+        }
+
+        internal static string RelativePathSansQueryString(this ApiDescription apiDescription)
+        {
+            return apiDescription.RelativePath.Split('?').First();
         }
 
         internal static IEnumerable<string> SupportedRequestMediaTypes(this ApiDescription apiDescription)
@@ -43,32 +69,21 @@ namespace Swashbuckle.SwaggerGen.Generator
                 .Distinct();
         }
 
-        public static IEnumerable<object> GetControllerAttributes(this ApiDescription apiDescription)
-        {
-            var actionDescriptor = apiDescription.ActionDescriptor as ControllerActionDescriptor;
-            return (actionDescriptor != null)
-                ? actionDescriptor.ControllerTypeInfo.GetCustomAttributes(true)
-                : Enumerable.Empty<object>();
-        }
-
-        public static IEnumerable<object> GetActionAttributes(this ApiDescription apiDescription)
-        {
-            var actionDescriptor = apiDescription.ActionDescriptor as ControllerActionDescriptor;
-            return (actionDescriptor != null)
-                ? actionDescriptor.MethodInfo.GetCustomAttributes(true)
-                : Enumerable.Empty<object>();
-        }
-
-
-        
-        internal static string RelativePathSansQueryString(this ApiDescription apiDescription)
-        {
-            return apiDescription.RelativePath.Split('?').First();
-        }
-
         internal static bool IsObsolete(this ApiDescription apiDescription)
         {
-            return apiDescription.GetActionAttributes().OfType<ObsoleteAttribute>().Any();
+            return apiDescription.ActionAttributes().OfType<ObsoleteAttribute>().Any();
         }
+
+        private static ControllerActionDescriptor ControllerActionDescriptor(this ApiDescription apiDescription)
+        {
+            var controllerActionDescriptor = apiDescription.GetProperty<ControllerActionDescriptor>();
+            if (controllerActionDescriptor == null)
+            {
+                controllerActionDescriptor = apiDescription.ActionDescriptor as ControllerActionDescriptor;
+                apiDescription.SetProperty(controllerActionDescriptor);
+            }
+            return controllerActionDescriptor; 
+        }
+
     }
 }

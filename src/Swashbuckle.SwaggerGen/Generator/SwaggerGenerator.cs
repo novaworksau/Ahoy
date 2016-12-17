@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Swashbuckle.Swagger.Model;
 
 namespace Swashbuckle.SwaggerGen.Generator
@@ -11,33 +12,37 @@ namespace Swashbuckle.SwaggerGen.Generator
     {
         private readonly IApiDescriptionGroupCollectionProvider _apiDescriptionsProvider;
         private readonly ISchemaRegistryFactory _schemaRegistryFactory;
-        private readonly SwaggerGeneratorOptions _options;
+        private readonly SwaggerGeneratorSettings _settings;
 
         public SwaggerGenerator(
             IApiDescriptionGroupCollectionProvider apiDescriptionsProvider,
             ISchemaRegistryFactory schemaRegistryFactory,
-            SwaggerGeneratorOptions options = null)
+            SwaggerGeneratorSettings settings = null)
         {
             _apiDescriptionsProvider = apiDescriptionsProvider;
             _schemaRegistryFactory = schemaRegistryFactory;
-            _options = options ?? new SwaggerGeneratorOptions();
+            _settings = settings ?? new SwaggerGeneratorSettings();
         }
 
         public SwaggerDocument GetSwagger(
-            string apiVersion,
+            string documentName,
             string host = null,
             string basePath = null,
             string[] schemes = null)
         {
             var schemaRegistry = _schemaRegistryFactory.Create();
 
-            var info = _options.ApiVersions.FirstOrDefault(v => v.Version == apiVersion);
-            if (info == null)
-                throw new UnknownApiVersion(apiVersion);
+            Info info;
+            if (!_settings.SwaggerDocs.TryGetValue(documentName, out info))
+                throw new UnknownSwaggerDocument(documentName);
 
-            var paths = GetApiDescriptionsFor(apiVersion)
-                .Where(apiDesc => !(_options.IgnoreObsoleteActions && apiDesc.IsObsolete()))
-                .OrderBy(_options.GroupNameSelector, _options.GroupNameComparer)
+            var apiDescriptions = _apiDescriptionsProvider.ApiDescriptionGroups.Items
+                .SelectMany(group => group.Items)
+                .Where(apiDesc => _settings.DocInclusionPredicate(documentName, apiDesc))
+                .Where(apiDesc => !_settings.IgnoreObsoleteActions || !apiDesc.IsObsolete())
+                .OrderBy(_settings.SortKeySelector);
+
+            var paths = apiDescriptions
                 .GroupBy(apiDesc => apiDesc.RelativePathSansQueryString())
                 .ToDictionary(group => "/" + group.Key, group => CreatePathItem(group, schemaRegistry));
 
@@ -49,29 +54,19 @@ namespace Swashbuckle.SwaggerGen.Generator
                 Schemes = schemes,
                 Paths = paths,
                 Definitions = schemaRegistry.Definitions,
-                SecurityDefinitions = _options.SecurityDefinitions
+                SecurityDefinitions = _settings.SecurityDefinitions
             };
 
             var filterContext = new DocumentFilterContext(
                 _apiDescriptionsProvider.ApiDescriptionGroups,
                 schemaRegistry);
 
-            foreach (var filter in _options.DocumentFilters)
+            foreach (var filter in _settings.DocumentFilters)
             {
                 filter.Apply(swaggerDoc, filterContext);
             }
 
             return swaggerDoc;
-        }
-
-        private IEnumerable<ApiDescription> GetApiDescriptionsFor(string apiVersion)
-        {
-            var allDescriptions = _apiDescriptionsProvider.ApiDescriptionGroups.Items
-                .SelectMany(group => group.Items);
-
-            return (_options.VersionSupportResolver == null)
-                ? allDescriptions
-                : allDescriptions.Where(apiDesc => _options.VersionSupportResolver(apiDesc, apiVersion));
         }
 
         private PathItem CreatePathItem(IEnumerable<ApiDescription> apiDescriptions, ISchemaRegistry schemaRegistry)
@@ -81,20 +76,24 @@ namespace Swashbuckle.SwaggerGen.Generator
             // Group further by http method
             var perMethodGrouping = apiDescriptions
                 .GroupBy(apiDesc => apiDesc.HttpMethod);
-                
+
             foreach (var group in perMethodGrouping)
             {
                 var httpMethod = group.Key;
 
                 if (httpMethod == null)
                     throw new NotSupportedException(string.Format(
-                        "Unbounded HTTP verbs for path '{0}'. Are you missing an HttpMethodAttribute?",
-                        group.First().RelativePathSansQueryString()));
+                        "Ambiguous HTTP method for action - {0}. " +
+                        "Actions require an explicit HttpMethod binding for Swagger",
+                        group.First().ActionDescriptor.DisplayName));
 
                 if (group.Count() > 1)
                     throw new NotSupportedException(string.Format(
-                        "Multiple operations with path '{0}' and method '{1}'. Are you overloading action methods?",
-                        group.First().RelativePathSansQueryString(), httpMethod));
+                        "HTTP method \"{0}\" & path \"{1}\" overloaded by actions - {2}. " +
+                        "Actions require unique method/path combination for Swagger",
+                        httpMethod,
+                        group.First().RelativePathSansQueryString(),
+                        string.Join(",", group.Select(apiDesc => apiDesc.ActionDescriptor.DisplayName))));
 
                 var apiDescription = group.Single();
 
@@ -129,11 +128,9 @@ namespace Swashbuckle.SwaggerGen.Generator
 
         private Operation CreateOperation(ApiDescription apiDescription, ISchemaRegistry schemaRegistry)
         {
-            var groupName = _options.GroupNameSelector(apiDescription);
-
             var parameters = apiDescription.ParameterDescriptions
-                .Where(paramDesc => paramDesc.Source.IsFromRequest)
-                .Select(paramDesc => CreateParameter(paramDesc, schemaRegistry))
+                .Where(paramDesc => paramDesc.Source.IsFromRequest && !paramDesc.IsPartOfCancellationToken())
+                .Select(paramDesc => CreateParameter(apiDescription, paramDesc, schemaRegistry))
                 .ToList();
 
             var responses = apiDescription.SupportedResponseTypes
@@ -145,17 +142,17 @@ namespace Swashbuckle.SwaggerGen.Generator
 
             var operation = new Operation
             {
-                Tags = (groupName != null) ? new[] { groupName } : null,
+                Tags = new[] { _settings.TagSelector(apiDescription) },
                 OperationId = apiDescription.FriendlyId(),
                 Consumes = apiDescription.SupportedRequestMediaTypes().ToList(),
                 Produces = apiDescription.SupportedResponseMediaTypes().ToList(),
                 Parameters = parameters.Any() ? parameters : null, // parameters can be null but not empty
                 Responses = responses,
-                Deprecated = apiDescription.IsObsolete()
+                Deprecated = apiDescription.IsObsolete() ? true : (bool?)null
             };
 
             var filterContext = new OperationFilterContext(apiDescription, schemaRegistry);
-            foreach (var filter in _options.OperationFilters)
+            foreach (var filter in _settings.OperationFilters)
             {
                 filter.Apply(operation, filterContext);
             }
@@ -163,39 +160,63 @@ namespace Swashbuckle.SwaggerGen.Generator
             return operation;
         }
 
-        private IParameter CreateParameter(ApiParameterDescription paramDesc, ISchemaRegistry schemaRegistry)
+        private IParameter CreateParameter(
+            ApiDescription apiDescription,
+            ApiParameterDescription paramDescription,
+            ISchemaRegistry schemaRegistry)
         {
-            var source = paramDesc.Source.Id.ToLower();
-            var schema = (paramDesc.Type == null) ? null : schemaRegistry.GetOrRegister(paramDesc.Type);
+            var location = GetParameterLocation(apiDescription, paramDescription);
 
-            if (source == "body")
+            var name = _settings.DescribeAllParametersInCamelCase
+                ? paramDescription.Name.ToCamelCase()
+                : paramDescription.Name;
+
+            var schema = (paramDescription.Type == null) ? null : schemaRegistry.GetOrRegister(paramDescription.Type);
+
+            if (location == "body")
             {
                 return new BodyParameter
                 {
-                    Name = paramDesc.Name,
-                    In = source,
+                    Name = name,
                     Schema = schema
                 };
             }
-            else
+
+            var nonBodyParam = new NonBodyParameter
             {
-                var nonBodyParam = new NonBodyParameter
-                {
-                    Name = paramDesc.Name,
-                    In = source,
-                    Required = (source == "path")
-                };
+                Name = name,
+                In = location,
+                Required = (location == "path")
+            };
 
-                if (schema == null)
-                    nonBodyParam.Type = "string";
-                else
-                    nonBodyParam.PopulateFrom(schema);
+            if (schema == null)
+                nonBodyParam.Type = "string";
+            else
+                nonBodyParam.PopulateFrom(schema);
 
-                if (nonBodyParam.Type == "array")
-                    nonBodyParam.CollectionFormat = "multi";
+            if (nonBodyParam.Type == "array")
+                nonBodyParam.CollectionFormat = "multi";
 
-                return nonBodyParam;
-            }
+            return nonBodyParam;
+        }
+
+        private string GetParameterLocation(ApiDescription apiDescription, ApiParameterDescription paramDescription)
+        {
+            if (paramDescription.Source == BindingSource.Form)
+                return "formData";
+            else if (paramDescription.Source == BindingSource.Body)
+                return "body";
+            else if (paramDescription.Source == BindingSource.Header)
+                return "header";
+            else if (paramDescription.Source == BindingSource.Path)
+                return "path";
+            else if (paramDescription.Source == BindingSource.Query)
+                return "query";
+
+            throw new NotSupportedException(string.Format(
+                "Ambiguous location (path, query etc.) for one or more parameters in action - {0}. " +
+                "Action parameters require an explicit \"From\" binding for Swagger",
+                apiDescription.ActionDescriptor.DisplayName));
         }
 
         private Response CreateResponse(ApiResponseType apiResponseType, ISchemaRegistry schemaRegistry)
@@ -218,6 +239,14 @@ namespace Swashbuckle.SwaggerGen.Generator
             { "1\\d{2}", "Information" },
             { "2\\d{2}", "Success" },
             { "3\\d{2}", "Redirect" },
+            { "400", "Bad Request" },
+            { "401", "Unauthorized" },
+            { "403", "Forbidden" },
+            { "404", "Not Found" },
+            { "405", "Method Not Allowed" },
+            { "406", "Not Acceptable" },
+            { "408", "Request Timeout" },
+            { "409", "Conflict" },
             { "4\\d{2}", "Client Error" },
             { "5\\d{2}", "Server Error" }
         };

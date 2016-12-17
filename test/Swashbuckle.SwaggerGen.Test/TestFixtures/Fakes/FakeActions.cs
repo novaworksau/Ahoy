@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Swashbuckle.SwaggerGen.Annotations;
@@ -54,7 +55,16 @@ namespace Swashbuckle.SwaggerGen.TestFixtures
         public void AcceptsStringFromHeader([FromHeader]string param)
         { }
 
+        public void AcceptsStringFromForm([FromForm]string param)
+        { }
+
         public void AcceptsComplexTypeFromBody([FromBody]ComplexType param)
+        { }
+
+        public void AcceptsUnboundParameter(string param)
+        { }
+
+        public void AcceptsCancellationToken(CancellationToken cancellationToken)
         { }
 
         [Obsolete]
@@ -92,7 +102,7 @@ namespace Swashbuckle.SwaggerGen.TestFixtures
             [FromQuery(Name="p1")]string param1,
             [FromQuery(Name="p2")]string param2)
         { }
-            
+
         [ProducesResponseType(typeof(void), 204)]
         [ProducesResponseType(typeof(IDictionary<string, string>), 400)]
         public IActionResult AnnotatedWithResponseTypeAttributes()
@@ -107,5 +117,12 @@ namespace Swashbuckle.SwaggerGen.TestFixtures
         [SwaggerOperationFilter(typeof(VendorExtensionsOperationFilter))]
         public void AnnotatedWithSwaggerOperationFilter()
         { }
-   }
+
+        [SwaggerResponse(204, typeof(void), "No content is returned.")]
+        [SwaggerResponse(400, typeof(IDictionary<string, string>), "This returns a dictionary.")]
+        public IActionResult AnnotatedWithSwaggerResponseAttributes()
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

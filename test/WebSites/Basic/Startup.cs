@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.IO;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Serialization;
 using Swashbuckle.Swagger.Model;
 using Basic.Swagger;
-using Microsoft.Extensions.PlatformAbstractions;
-using System.IO;
 
 namespace Basic
 {
@@ -36,15 +36,18 @@ namespace Basic
 
             services.AddSwaggerGen(c =>
             {
-                c.SingleApiVersion(new Info
-                {
-                    Version = "v1",
-                    Title = "Swashbuckle Sample API",
-                    Description = "A sample API for testing Swashbuckle",
-                    TermsOfService = "Some terms ..."
-                });
+                c.SwaggerDoc("v1",
+                    new Info
+                    {
+                        Version = "v1",
+                        Title = "Swashbuckle Sample API",
+                        Description = "A sample API for testing Swashbuckle",
+                        TermsOfService = "Some terms ..."
+                    }
+                );
 
                 c.OperationFilter<AssignOperationVendorExtensions>();
+                c.OperationFilter<FormDataOperationFilter>();
             });
 
             if (_hostingEnv.IsDevelopment())
@@ -71,12 +74,15 @@ namespace Basic
             // Add the following route for porting Web API 2 controllers.
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
 
-            app.UseSwagger((httpRequest, swaggerDoc) =>
+            app.UseSwagger(documentFilter: (swaggerDoc, httpRequest) =>
             {
                 swaggerDoc.Host = httpRequest.Host.Value;
             });
 
-            app.UseSwaggerUi();
+            app.UseSwaggerUi(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "V1 Docs");
+            });
         }
 
         private string GetXmlCommentsPath(ApplicationEnvironment appEnvironment)

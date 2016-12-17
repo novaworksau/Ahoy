@@ -23,11 +23,19 @@ Properties {
         "src/Swashbuckle.SwaggerGen",
         "src/Swashbuckle.SwaggerUi"
     )
+
+    if ("$env:APPVEYOR" -eq "True") {
+        if ($env:APPVEYOR_REPO_TAG -eq "true") {
+            $BuildNumber = $env:APPVEYOR_REPO_TAG_NAME
+        } else {
+            $BuildNumber = "preview-" + $env:APPVEYOR_BUILD_NUMBER.PadLeft(4, '0')
+        }
+    }
 }
 
 FormatTaskName ("`n" + ("-"*25) + "[{0}]" + ("-"*25) + "`n")
 
-Task Default -depends init, clean, dotnet-install, dotnet-restore, dotnet-build, dotnet-test, dotnet-pack
+Task Default -depends init, clean, dotnet-install, dotnet-restore, bower-restore, dotnet-build, dotnet-test, dotnet-pack
 
 Task init {
 
@@ -59,12 +67,12 @@ Task dotnet-install {
         exec { dotnet --version }
     } else {
         Write-Host "Installing dotnet SDK"
-        
+
         $installScript = Join-Path $ArtifactsPath "dotnet-install.ps1"
-        
+
         Invoke-WebRequest "https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0/scripts/obtain/install.ps1" `
             -OutFile $installScript
-            
+
         & $installScript
     }
 }
@@ -72,6 +80,13 @@ Task dotnet-install {
 Task dotnet-restore {
 
     exec { dotnet restore -v Minimal }
+}
+
+Task bower-restore {
+
+    exec { cd src/Swashbuckle.SwaggerUi }
+	exec { bower install }
+	exec { cd ../../ }
 }
 
 Task dotnet-build {

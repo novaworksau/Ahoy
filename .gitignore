@@ -2,6 +2,13 @@
 [Bb]in/
 .vs/
 src/SwashBuckle.SwaggerUi/bower_components/swagger-ui/node_modules/
+.vscode/
+.idea*
+bower_components/
 project.lock.json
 *.user
+*.pdb
 artifacts/
+*.nuget.props
+.DS_Store
+Thumbs.db

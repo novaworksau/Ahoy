@@ -143,7 +143,7 @@ namespace Swashbuckle.Swagger.Model
 
         public IList<string> Schemes { get; set; }
 
-        public bool Deprecated { get; set; }
+        public bool? Deprecated { get; set; }
 
         public IList<IDictionary<string, IEnumerable<string>>> Security { get; set; }
 
@@ -193,6 +193,7 @@ namespace Swashbuckle.Swagger.Model
     {
         public BodyParameter()
         {
+            In = "body";
             Extensions = new Dictionary<string, object>();
         }
 
@@ -368,42 +369,5 @@ namespace Swashbuckle.Swagger.Model
         public bool? Attribute { get; set; }
 
         public bool? Wrapped { get; set; }
-    }
-
-    public abstract class SecurityScheme
-    {
-        public SecurityScheme()
-        {
-            Extensions = new Dictionary<string, object>();
-        }
-
-        public string Type { get; set; }
-
-        public string Description { get; set; }
-
-        [JsonExtensionData]
-        public Dictionary<string, object> Extensions { get; private set; }
-    }
-
-    public class BasicAuthScheme : SecurityScheme
-    {
-    }
-
-    public class ApiKeyScheme : SecurityScheme
-    {
-        public string Name { get; set; }
-
-        public string In { get; set; }
-    }
-
-    public class OAuth2Scheme : SecurityScheme
-    {
-        public string Flow { get; set; }
-
-        public string AuthorizationUrl { get; set; }
-
-        public string TokenUrl { get; set; }
-
-        public IDictionary<string, string> Scopes { get; set; }
     }
 }
