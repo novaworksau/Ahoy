@@ -6,9 +6,9 @@
     "warningsAsErrors": true
   },
   "dependencies": {
-    "Microsoft.AspNetCore.Mvc.Core": "1.0.0",
-    "Microsoft.AspNetCore.Mvc.DataAnnotations": "1.0.0",
-    "Microsoft.NETCore.Platforms": "1.0.1",
+    "Microsoft.AspNetCore.Mvc.Core": "1.1.0",
+    "Microsoft.AspNetCore.Mvc.DataAnnotations": "1.1.0",
+    "Microsoft.NETCore.Platforms": "1.1.0",
     "Moq": "4.6.25-*",
     "Swashbuckle.SwaggerGen": "6.0.0-*",
     "Swashbuckle.SwaggerUi": "6.0.0-*",
@@ -22,7 +22,7 @@
           "type": "platform",
           "version": "1.0.0"
         },
-        "System.Diagnostics.TraceSource": "4.0.0"
+        "System.Diagnostics.TraceSource": "4.3.0"
       },
       "imports": [
         "dnxcore50",

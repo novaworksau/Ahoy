@@ -24,3 +24,12 @@ after_build:
 
 artifacts:
   - path: artifacts\*.nupkg
+
+deploy:
+  - provider: NuGet
+    server: https://novaworks.myget.org/F/public/api/v2/package
+    api_key:
+      secure: 8CsS42Ic+vTW/DhHUAJ5KreTtOCnHDvzPwLJebjUQelchOvjhskEZFJ4EIR9tV3F
+    skip_symbols: false
+    symbol_server: https://novaworks.myget.org/F/public/symbols/api/v2/package
+    artifact: /.*\.nupkg/

@@ -29,9 +29,9 @@
   },
 
   "dependencies": {
-    "Microsoft.AspNetCore.Routing": "1.0.0",
-    "Microsoft.AspNetCore.StaticFiles": "1.0.0",
-    "Microsoft.Extensions.FileProviders.Embedded": "1.0.0",
+    "Microsoft.AspNetCore.Routing": "1.1.0",
+    "Microsoft.AspNetCore.StaticFiles": "1.1.0",
+    "Microsoft.Extensions.FileProviders.Embedded": "1.1.0",
     "Newtonsoft.Json": "9.0.1"
   },
 
@@ -41,9 +41,14 @@
         "System.Xml": "4.0.0.0"
       }
     },
+    "net46": {
+      "frameworkAssemblies": {
+        "System.Xml": "4.0.0.0"
+      }
+    },
     "netstandard1.6": {
       "dependencies": {
-        "System.Xml.XPath": "4.0.1"
+        "System.Xml.XPath": "4.3.0"
       },
       "imports": [
         "dnxcore50",

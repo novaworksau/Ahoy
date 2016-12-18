@@ -25,9 +25,9 @@
   },
 
   "dependencies": {
-    "Microsoft.AspNetCore.Mvc.ApiExplorer": "1.0.0",
-    "Microsoft.AspNetCore.Mvc.Core": "1.0.0",
-    "Microsoft.AspNetCore.Mvc.DataAnnotations": "1.0.0",
+    "Microsoft.AspNetCore.Mvc.ApiExplorer": "1.1.0",
+    "Microsoft.AspNetCore.Mvc.Core": "1.1.0",
+    "Microsoft.AspNetCore.Mvc.DataAnnotations": "1.1.0",
     "Swashbuckle.Swagger": "6.0.0-rc3-*"
   },
 
@@ -37,9 +37,14 @@
         "System.Xml": "4.0.0.0"
       }
     },
+    "net46": {
+      "frameworkAssemblies": {
+        "System.Xml": "4.0.0.0"
+      }
+    },
     "netstandard1.6": {
       "dependencies": {
-        "System.Xml.XPath": "4.0.1"
+        "System.Xml.XPath": "4.3.0"
       },
       "imports": [
         "dnxcore50",

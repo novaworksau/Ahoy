@@ -3,9 +3,9 @@
     "warningsAsErrors": true
   },
   "dependencies": {
-    "Microsoft.AspNetCore.Mvc": "1.0.0",
-    "Microsoft.AspNetCore.TestHost": "1.0.0",
-    "Microsoft.NETCore.Platforms": "1.0.1",
+    "Microsoft.AspNetCore.Mvc": "1.1.0",
+    "Microsoft.AspNetCore.TestHost": "1.1.0",
+    "Microsoft.NETCore.Platforms": "1.1.0",
     "Moq": "4.6.25-*",
     "dotnet-test-xunit": "2.2.0-preview2-*",
     "xunit": "2.2.0-beta2-*",
@@ -24,8 +24,8 @@
           "type": "platform",
           "version": "1.0.0"
         },
-        "System.Diagnostics.Process": "4.1.0",
-        "System.Diagnostics.TraceSource": "4.0.0"
+        "System.Diagnostics.Process": "4.3.0",
+        "System.Diagnostics.TraceSource": "4.3.0"
       },
       "imports": [
         "dnxcore50",

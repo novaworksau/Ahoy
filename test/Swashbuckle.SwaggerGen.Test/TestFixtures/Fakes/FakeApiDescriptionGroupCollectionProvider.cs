@@ -23,6 +23,7 @@ using Newtonsoft.Json;
 using System.Buffers;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.DataAnnotations;
 
 namespace Swashbuckle.SwaggerGen.TestFixtures
 {
@@ -129,9 +130,13 @@ namespace Swashbuckle.SwaggerGen.TestFixtures
         {
             var detailsProviders = new IMetadataDetailsProvider[]
             {
-                new DefaultBindingMetadataProvider(CreateMessageProvider()),
+                //new DefaultBindingMetadataProvider(),
+                //CreateMessageProvider(),
+                new DefaultBindingMetadataProvider(),
                 new DefaultValidationMetadataProvider(),
-                new DataAnnotationsMetadataProvider()
+                new DataAnnotationsMetadataProvider(
+                    new TestOptionsManager<MvcDataAnnotationsLocalizationOptions>(),
+                    stringLocalizerFactory: null)
             };
 
             var compositeDetailsProvider = new DefaultCompositeMetadataDetailsProvider(detailsProviders);
@@ -150,6 +155,14 @@ namespace Swashbuckle.SwaggerGen.TestFixtures
                 ValueIsInvalidAccessor = value => $"The value '{ value }' is invalid.",
                 ValueMustBeANumberAccessor = name => $"The field { name } must be a number.",
             };
+        }
+    }
+
+    public class TestOptionsManager<T> : OptionsManager<T> where T : class, new()
+    {
+        public TestOptionsManager()
+            : base(Enumerable.Empty<IConfigureOptions<T>>())
+        {
         }
     }
 }
