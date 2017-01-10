@@ -18,9 +18,9 @@ build:
   verbosity: minimal
 
 after_build:
-  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.Swagger\project.json
-  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.SwaggerUi\project.json
-  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.SwaggerGen\project.json
+  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.AspNetCore.Swagger\project.json
+  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.AspNetCore.SwaggerUi\project.json
+  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.AspNetCore.SwaggerGen\project.json
 
 artifacts:
   - path: artifacts\*.nupkg
