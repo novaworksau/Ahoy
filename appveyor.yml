@@ -5,7 +5,7 @@ configuration:
 
 init:
   - git config --global core.autocrlf input
-  - ps: $Env:LABEL = $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
+  - ps: $Env:LABEL = "release-" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
 
 test: off
 
