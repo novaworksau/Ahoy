@@ -10,8 +10,8 @@
     "Microsoft.AspNetCore.Diagnostics": "1.1.0",
     "Microsoft.Extensions.Logging.Console": "1.1.0",
     "Microsoft.Extensions.Logging.Debug": "1.1.0",
-    "Swashbuckle.SwaggerGen": "6.0.0-*",
-    "Swashbuckle.SwaggerUi": "6.0.0-*"
+    "Swashbuckle.SwaggerGen": "1.0.0-*",
+    "Swashbuckle.SwaggerUi": "1.0.0-*"
   },
   "frameworks": {
     "net451": {},
@@ -19,7 +19,7 @@
     "netcoreapp1.0": {
       "dependencies": {
         "Microsoft.NETCore.App": {
-          "type": "platform",
+          "build": "platform",
           "version": "1.0.0"
         }
       },
