@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Serialization;
-using Swashbuckle.Swagger.Model;
+using Swashbuckle.AspNetCore.Swagger;
 using Basic.Swagger;
 
 namespace Basic
@@ -74,9 +74,9 @@ namespace Basic
             // Add the following route for porting Web API 2 controllers.
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
 
-            app.UseSwagger(documentFilter: (swaggerDoc, httpRequest) =>
+            app.UseSwagger(c =>
             {
-                swaggerDoc.Host = httpRequest.Host.Value;
+                c.PreSerializeFilters.Add((swagger, httpReq) => swagger.Host = httpReq.Host.Value);
             });
 
             app.UseSwaggerUi(c =>

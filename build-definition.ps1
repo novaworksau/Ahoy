@@ -2,7 +2,7 @@ Properties {
 
     # This number will be used to replace the * in all versions of all libraries.
     # This should be overwritten by a CI system like VSTS, AppVeyor, TeamCity, ...
-    $BuildNumber = "local" + ((Get-Date).ToUniversalTime().ToString("yyyyMMddHHmm"))
+    $VersionSuffix = ""
 
     # The build configuration used for compilation
     $BuildConfiguration = "Release"
@@ -18,17 +18,17 @@ Properties {
 
     # A list of projects for which NuGet packages should be created
     $NugetLibraries = @(
-        "src/Swashbuckle",
-        "src/Swashbuckle.Swagger",
-        "src/Swashbuckle.SwaggerGen",
-        "src/Swashbuckle.SwaggerUi"
+        "src/Swashbuckle.AspNetCore",
+        "src/Swashbuckle.AspNetCore.Swagger",
+        "src/Swashbuckle.AspNetCore.SwaggerGen",
+        "src/Swashbuckle.AspNetCore.SwaggerUi"
     )
 
-    if ("$env:APPVEYOR" -eq "True") {
-        if ($env:APPVEYOR_REPO_TAG -eq "true") {
-            $BuildNumber = $env:APPVEYOR_REPO_TAG_NAME
-        } else {
-            $BuildNumber = "preview-" + $env:APPVEYOR_BUILD_NUMBER.PadLeft(4, '0')
+    if ($env:APPVEYOR -eq "True") {
+        if ($env:APPVEYOR_REPO_TAG -ne "true") {
+            $VersionSuffix = "preview-" + $env:APPVEYOR_BUILD_NUMBER.PadLeft(4, '0')
+        } elseif ($env:APPVEYOR_REPO_TAG_NAME.Contains("-")) {
+            $VersionSuffix = $env:APPVEYOR_REPO_TAG_NAME.SubString(6) # i.e. the part after "-"
         }
     }
 }
@@ -39,13 +39,13 @@ Task Default -depends init, clean, dotnet-install, dotnet-restore, bower-restore
 
 Task init {
 
-    Write-Host "BuildNumber: $BuildNumber"
+    Write-Host "VersionSuffix: $VersionSuffix"
     Write-Host "BuildConfiguration: $BuildConfiguration"
     Write-Host "ArtifactsPath: $ArtifactsPath"
     Write-Host "ArtifactsPathTests: $ArtifactsPathTests"
     Write-Host "ArtifactsPathNuGet: $ArtifactsPathNuGet"
 
-    Assert ($BuildNumber -ne $null) "Property 'BuildNumber' may not be null."
+    Assert ($VersionSuffix -ne $null) "Property 'VersionSuffix' may not be null."
     Assert ($BuildConfiguration -ne $null) "Property 'BuildConfiguration' may not be null."
     Assert ($ArtifactsPath -ne $null) "Property 'ArtifactsPath' may not be null."
     Assert ($ArtifactsPathTests -ne $null) "Property 'ArtifactsPathTests' may not be null."
@@ -84,14 +84,18 @@ Task dotnet-restore {
 
 Task bower-restore {
 
-    exec { cd src/Swashbuckle.SwaggerUi }
-	exec { bower install }
-	exec { cd ../../ }
+    exec { cd src/Swashbuckle.AspNetCore.SwaggerUi }
+    exec { bower install }
+    exec { cd ../../ }
 }
 
 Task dotnet-build {
 
-    exec { dotnet build **\project.json -c $BuildConfiguration --version-suffix $BuildNumber }
+    if ($VersionSuffix.Length -gt 0) {
+        exec { dotnet build **\project.json -c $BuildConfiguration --version-suffix $VersionSuffix }
+    } else {
+        exec { dotnet build **\project.json -c $BuildConfiguration }
+    }
 }
 
 Task dotnet-test {
@@ -146,6 +150,10 @@ Task dotnet-pack {
         Write-Host "Packaging $library to $libraryOutput"
         Write-Host ""
 
-        exec { dotnet pack $library -c $BuildConfiguration --version-suffix $BuildNumber --no-build -o $libraryOutput }
+        if ($VersionSuffix.Length -gt 0) {
+            exec { dotnet pack $library -c $BuildConfiguration --no-build -o $libraryOutput --version-suffix $VersionSuffix }
+        } else {
+            exec { dotnet pack $library -c $BuildConfiguration --no-build -o $libraryOutput }
+        }
     }
 }
