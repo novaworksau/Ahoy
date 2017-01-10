@@ -1,11 +1,11 @@
 image: Visual Studio 2015
-version: "1.0.0-rc3-{build}"
+version: "1.0.0.{build}"
 configuration:
   - Release
 
 init:
   - git config --global core.autocrlf input
-  - ps: $Env:LABEL = "rc3-" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
+  - ps: $Env:LABEL = $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
 
 test: off
 
@@ -13,7 +13,7 @@ before_build:
   - dotnet restore -v minimal
 
 build:
-  project: ahoy.sln
+  project: Swashbuckle.AspNetCore.sln
   parallel: true
   verbosity: minimal
 
