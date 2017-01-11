@@ -5,7 +5,16 @@ configuration:
 
 init:
   - git config --global core.autocrlf input
-  - ps: $Env:LABEL = "release-" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(5, "0")
+
+install:
+  - ps: .\ReleaseVersion.ps1  
+
+assembly_info:
+  patch: true
+  file: SharedAssemblyInfo.cs
+  assembly_version: $(appveyor_build_version)
+  assembly_file_version: $(appveyor_build_version)
+  assembly_informational_version: $(appveyor_build_version)
 
 test: off
 
@@ -18,9 +27,7 @@ build:
   verbosity: minimal
 
 after_build:
-  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.AspNetCore.Swagger\project.json
-  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.AspNetCore.SwaggerUi\project.json
-  - dotnet pack -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts .\src\Swashbuckle.AspNetCore.SwaggerGen\project.json
+  - ps: .\CreatePackages.ps1
 
 artifacts:
   - path: artifacts\*.nupkg

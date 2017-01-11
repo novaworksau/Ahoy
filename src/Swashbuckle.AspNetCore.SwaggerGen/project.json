@@ -3,7 +3,10 @@
   "description": "Swagger generator component for Swashbuckle - a Swagger toolchain for ASP.NET Core.",
 
   "buildOptions": {
-    "keyFile": "Swashbuckle.AspNetCore.SwaggerGen.snk"
+    "keyFile": "Swashbuckle.AspNetCore.SwaggerGen.snk",
+    "compile": {
+      "include": [ "../../SharedAssemblyInfo.cs" ]
+    }
   },
 
   "packOptions": {
