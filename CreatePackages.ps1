@@ -1,4 +1,4 @@
-gci -Recurse src\**\project.json | Where {$_.Directory.Name -ne "Swashbuckle.AspNetCore"}
+gci -Recurse src\**\project.json | Where {$_.Directory.Name -ne "Swashbuckle.AspNetCore"} |
 Foreach-Object {  
   if($Env:PackageType -eq "development")
   {
